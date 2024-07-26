@@ -56,18 +56,31 @@ export default function App() {
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(false);
   const query = "interstellar";
 
   useEffect(function () {
+    // Fetch movies data when component mounts
     async function fetchMovies() {
-      setIsLoading(true);
-      const res = await fetch(
-        `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
-      );
-      const data = await res.json();
-      setMovies(data.Search);
-      setIsLoading(false);
-      console.log(data.Search);
+      try {
+        setIsLoading(true);
+        const res = await fetch(
+          `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+        );
+
+        if (!res.ok) {
+          throw new Error("Something went Wrong while fetching Movies");
+        }
+
+        const data = await res.json();
+        setMovies(data.Search);
+        console.log(data);
+      } catch (error) {
+        console.error(error.message);
+        setError(error.message);
+      } finally {
+        setIsLoading(false);
+      }
     }
     fetchMovies();
   }, []);
@@ -81,7 +94,15 @@ export default function App() {
       </NavBar>
 
       <Main>
-        <Box>{isLoading ? <Loader /> : <MovieList movies={movies} />}</Box>
+        <Box>
+          {error ? (
+            <ErrorMessage message={error} />
+          ) : isLoading ? (
+            <Loader />
+          ) : (
+            <MovieList movies={movies} />
+          )}
+        </Box>
         <Box>
           <WatchedSummary watched={watched} />
           <WatchedMovieList watched={watched} />
@@ -93,6 +114,14 @@ export default function App() {
 
 function Loader() {
   return <p className="loader">Loading...</p>;
+}
+
+function ErrorMessage({ message }) {
+  return (
+    <p className="error">
+      <span> ⚠️ </span> {message}
+    </p>
+  );
 }
 
 function NavBar({ children }) {
@@ -108,6 +137,7 @@ function Logo() {
   );
 }
 
+// Search component to input search query
 function Search() {
   const [query, setQuery] = useState("");
   return (
@@ -121,6 +151,7 @@ function Search() {
   );
 }
 
+// NumResults component to display the number of results
 function NumResults({ movies }) {
   return (
     <p className="num-results">
@@ -129,10 +160,12 @@ function NumResults({ movies }) {
   );
 }
 
+// Main component to wrap main content
 function Main({ children }) {
   return <main className="main">{children}</main>;
 }
 
+// Box component with toggle functionality
 function Box({ children }) {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -146,6 +179,7 @@ function Box({ children }) {
   );
 }
 
+// MovieList component to display list of movies
 function MovieList({ movies }) {
   return (
     <ul className="list">
@@ -156,6 +190,7 @@ function MovieList({ movies }) {
   );
 }
 
+// Movie component to display a single movie
 function Movie({ movie }) {
   return (
     <li>
@@ -171,6 +206,7 @@ function Movie({ movie }) {
   );
 }
 
+// WatchedSummary component to display summary of watched movies
 function WatchedSummary({ watched }) {
   const avgImdbRating = average(watched.map((movie) => movie.imdbRating));
   const avgUserRating = average(watched.map((movie) => movie.userRating));
@@ -201,6 +237,7 @@ function WatchedSummary({ watched }) {
   );
 }
 
+// WatchedMovieList component to display list of watched movies
 function WatchedMovieList({ watched }) {
   return (
     <ul className="list">
@@ -211,6 +248,7 @@ function WatchedMovieList({ watched }) {
   );
 }
 
+// WatchedMovie component to display a single watched movie
 function WatchedMovie({ movie }) {
   return (
     <li>
