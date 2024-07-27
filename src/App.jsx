@@ -59,7 +59,7 @@ export default function App() {
   const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(false);
-  const tempQuery = "Interstellar";
+  const [selectedId, setSelectedId] = useState(null); //"tt1375666"
 
   useEffect(
     function () {
@@ -81,7 +81,7 @@ export default function App() {
           if (data.Response === "False") throw new Error("Movie Not Found");
 
           setMovies(data.Search);
-          console.log(data);
+          console.log(data.Search);
         } catch (error) {
           console.error(error.message);
           setError(error.message);
@@ -103,6 +103,20 @@ export default function App() {
     [query]
   );
 
+  function handleSelectedId(id) {
+    /* if (selectedId === id) {
+       setSelectedId(null);
+     } else {
+       setSelectedId(id);
+     } 
+  */
+    setSelectedId((selectedId) => (selectedId === id ? null : id));
+  }
+
+  function handleCloseMovie() {
+    setSelectedId(null);
+  }
+
   return (
     <>
       <NavBar>
@@ -119,12 +133,21 @@ export default function App() {
           ) : isLoading ? (
             <Loader />
           ) : (
-            <MovieList movies={movies} />
+            <MovieList movies={movies} onSelectMovie={handleSelectedId} />
           )}
         </Box>
         <Box>
-          <WatchedSummary watched={watched} />
-          <WatchedMovieList watched={watched} />
+          {selectedId ? (
+            <MovieDetails
+              selectedId={selectedId}
+              onCloseMovie={handleCloseMovie}
+            />
+          ) : (
+            <>
+              <WatchedSummary watched={watched} />
+              <WatchedMovieList watched={watched} />
+            </>
+          )}
         </Box>
       </Main>
     </>
@@ -202,20 +225,20 @@ function Box({ children }) {
 }
 
 // MovieList component to display list of movies
-function MovieList({ movies }) {
+function MovieList({ movies, onSelectMovie }) {
   return (
-    <ul className="list">
+    <ul className="list list-movies">
       {movies?.map((movie) => (
-        <Movie movie={movie} key={movie.imdbID} />
+        <Movie movie={movie} key={movie.imdbID} onSelectMovie={onSelectMovie} />
       ))}
     </ul>
   );
 }
 
 // Movie component to display a single movie
-function Movie({ movie }) {
+function Movie({ movie, onSelectMovie }) {
   return (
-    <li>
+    <li onClick={() => onSelectMovie(movie.imdbID)}>
       <img src={movie.Poster} alt={`${movie.Title} poster`} />
       <h3>{movie.Title}</h3>
       <div>
@@ -225,6 +248,17 @@ function Movie({ movie }) {
         </p>
       </div>
     </li>
+  );
+}
+
+function MovieDetails({ selectedId, onCloseMovie }) {
+  return (
+    <div className="details">
+      <button className="btn-back" onClick={onCloseMovie}>
+        &larr;
+      </button>
+      {selectedId}
+    </div>
   );
 }
 
