@@ -70,6 +70,13 @@ body {
   margin: 4.8rem;
 }
 
+.initialMsg {
+  text-align: center;
+  font-size: 2.4rem;
+  font-weight: 600;
+  margin: 4.8rem;
+}
+
 .error {
   text-align: center;
   font-size: 2rem;

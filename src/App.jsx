@@ -54,50 +54,66 @@ const KEY = `${import.meta.env.VITE_OMDb_API_KEY}`;
 
 export default function App() {
   const [movies, setMovies] = useState([]);
+  const [showInitialMessage, setShowInitialMessage] = useState(false);
+  const [query, setQuery] = useState("");
   const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(false);
-  const query = "interstell";
+  const tempQuery = "Interstellar";
 
-  useEffect(function () {
-    // Fetch movies data when component mounts
-    async function fetchMovies() {
-      try {
-        setIsLoading(true);
-        const res = await fetch(
-          `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
-        );
+  useEffect(
+    function () {
+      // Fetch movies data when component mounts
+      async function fetchMovies() {
+        try {
+          setIsLoading(true);
+          setError(false);
+          const res = await fetch(
+            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+          );
 
-        if (!res.ok) {
-          throw new Error("Something went Wrong while fetching Movies");
+          if (!res.ok) {
+            throw new Error("Something went Wrong while fetching Movies");
+          }
+
+          const data = await res.json();
+
+          if (data.Response === "False") throw new Error("Movie Not Found");
+
+          setMovies(data.Search);
+          console.log(data);
+        } catch (error) {
+          console.error(error.message);
+          setError(error.message);
+        } finally {
+          setIsLoading(false);
         }
-
-        const data = await res.json();
-
-        if (data.Response === "False") throw new Error("Movie Not Found");
-
-        setMovies(data.Search);
-        console.log(data);
-      } catch (error) {
-        console.error(error.message);
-        setError(error.message);
-      } finally {
-        setIsLoading(false);
       }
-    }
-    fetchMovies();
-  }, []);
+
+      if (query.length < 3) {
+        setShowInitialMessage(true);
+        setMovies([]);
+        setError(false);
+        return;
+      }
+      setShowInitialMessage(false);
+
+      fetchMovies();
+    },
+    [query]
+  );
 
   return (
     <>
       <NavBar>
         <Logo />
-        <Search />
+        <Search query={query} setQuery={setQuery} />
         <NumResults movies={movies} />
       </NavBar>
 
       <Main>
         <Box>
+          {showInitialMessage ? <StartSearch /> : null}
           {error ? (
             <ErrorMessage message={error} />
           ) : isLoading ? (
@@ -117,6 +133,10 @@ export default function App() {
 
 function Loader() {
   return <p className="loader">Loading...</p>;
+}
+
+function StartSearch() {
+  return <p className="initialMsg ">🍿 Popcorn in hand? Time to usePopcorn!</p>;
 }
 
 function ErrorMessage({ message }) {
@@ -141,8 +161,7 @@ function Logo() {
 }
 
 // Search component to input search query
-function Search() {
-  const [query, setQuery] = useState("");
+function Search({ query, setQuery }) {
   return (
     <input
       className="search"
