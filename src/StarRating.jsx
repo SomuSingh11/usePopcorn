@@ -21,7 +21,7 @@ StarRating.propTypes = {
   onSetMovieRating: PropTypes.func,
 };
 
-function StarRating({
+export default function StarRating({
   maxRating = 5,
   color = "#fcc419",
   size = "48",
@@ -122,7 +122,7 @@ function Star({
   );
 }
 
-export default function Test() {
+function Test() {
   const [movieRating, setMovieRating] = useState(0);
   return (
     <div>
