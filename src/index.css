@@ -312,10 +312,32 @@ body {
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.btn-add span {
+  border: none;
+  border-radius: 10rem;
+  font-size: 2.4rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0rem 1rem;
 }
 
 .btn-add:hover {
   background-color: var(--color-primary-light);
+}
+
+.watchedMsg {
+  background-color: var(--color-primary);
+  color: var(--color-text);
+  border: none;
+  border-radius: 5rem;
+  font-size: 1.4rem;
+  padding: 2.4rem;
+  font-weight: bold;
+  transition: all 0.3s;
 }
 
 .seconds {

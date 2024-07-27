@@ -118,6 +118,10 @@ export default function App() {
     setSelectedId(null);
   }
 
+  function handleAddWatched(movie) {
+    setWatched((watched) => [...watched, movie]);
+  }
+
   return (
     <>
       <NavBar>
@@ -142,6 +146,8 @@ export default function App() {
             <MovieDetails
               selectedId={selectedId}
               onCloseMovie={handleCloseMovie}
+              onAddWatched={handleAddWatched}
+              watched={watched}
             />
           ) : (
             <>
@@ -252,8 +258,9 @@ function Movie({ movie, onSelectMovie }) {
   );
 }
 
-function MovieDetails({ selectedId, onCloseMovie }) {
+function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
   const [movie, setMovie] = useState({});
+  const [userRating, setUserRating] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
   const {
@@ -269,10 +276,29 @@ function MovieDetails({ selectedId, onCloseMovie }) {
     Genre,
   } = movie;
 
-  console.log(Title, Year);
+  const isWatched = watched.some((movie) => {
+    return movie.imdbId === selectedId;
+  });
+  const watchedMovie = watched.find((movie) => movie.imdbId === selectedId);
+
+  function handleAdd() {
+    const newWatchedMovie = {
+      imdbId: selectedId,
+      Title,
+      Year,
+      Poster,
+      imdbRating: Number(imdbRating),
+      Runtime: Number(Runtime.split(" ")[0]),
+      userRating,
+    };
+    console.log(newWatchedMovie);
+    onAddWatched(newWatchedMovie);
+    onCloseMovie();
+  }
 
   useEffect(
     function () {
+      // Function to fetch movie details based on selectedId
       async function getMovieDetailes() {
         setIsLoading(true);
         const res = await fetch(
@@ -281,9 +307,9 @@ function MovieDetails({ selectedId, onCloseMovie }) {
         const data = await res.json();
         setMovie(data);
         setIsLoading(false);
-        //console.log(data);
+        console.log(data);
       }
-      getMovieDetailes();
+      getMovieDetailes(); // Call the function to fetch movie details
     },
     [selectedId]
   );
@@ -314,7 +340,25 @@ function MovieDetails({ selectedId, onCloseMovie }) {
 
           <section>
             <div className="rating">
-              <StarRating maxRating={10} size={24} />
+              {!isWatched ? (
+                <>
+                  <StarRating
+                    maxRating={10}
+                    size={24}
+                    setUserRating={setUserRating}
+                  />
+                  {userRating ? (
+                    <button className="btn-add" onClick={handleAdd}>
+                      {" "}
+                      <span>&#9758;</span> Add to Watched List
+                    </button>
+                  ) : null}
+                </>
+              ) : (
+                <p className="watchedMsg">
+                  Previously watched and rated: {watchedMovie?.userRating} 🌟
+                </p>
+              )}
             </div>
 
             <p>
@@ -333,7 +377,7 @@ function MovieDetails({ selectedId, onCloseMovie }) {
 function WatchedSummary({ watched }) {
   const avgImdbRating = average(watched.map((movie) => movie.imdbRating));
   const avgUserRating = average(watched.map((movie) => movie.userRating));
-  const avgRuntime = average(watched.map((movie) => movie.runtime));
+  const avgRuntime = average(watched.map((movie) => movie.Runtime));
 
   return (
     <div className="summary">
@@ -388,7 +432,7 @@ function WatchedMovie({ movie }) {
         </p>
         <p>
           <span>⏳</span>
-          <span>{movie.runtime} min</span>
+          <span>{movie.Runtime} min</span>
         </p>
       </div>
     </li>

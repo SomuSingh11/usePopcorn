@@ -28,14 +28,14 @@ export default function StarRating({
   messages = [],
   defaultRating = 0,
   className = "",
-  onSetMovieRating,
+  setUserRating,
 }) {
   const [rating, setRating] = useState(defaultRating);
   const [tempRating, setTempRating] = useState(0);
 
   function handleRating(rating) {
     setRating(rating);
-    onSetMovieRating(rating);
+    setUserRating(rating);
   }
 
   const textStyle = {
