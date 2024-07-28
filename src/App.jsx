@@ -1,53 +1,6 @@
 import { useEffect, useState } from "react";
 import StarRating from "./StarRating";
 
-const tempMovieData = [
-  {
-    imdbID: "tt1375666",
-    Title: "Inception",
-    Year: "2010",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
-  },
-  {
-    imdbID: "tt0133093",
-    Title: "The Matrix",
-    Year: "1999",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg",
-  },
-  {
-    imdbID: "tt6751668",
-    Title: "Parasite",
-    Year: "2019",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg",
-  },
-];
-
-const tempWatchedData = [
-  {
-    imdbID: "tt1375666",
-    Title: "Inception",
-    Year: "2010",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
-    runtime: 148,
-    imdbRating: 8.8,
-    userRating: 10,
-  },
-  {
-    imdbID: "tt0088763",
-    Title: "Back to the Future",
-    Year: "1985",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BZmU0M2Y1OGUtZjIxNi00ZjBkLTg1MjgtOWIyNThiZWIwYjRiXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_SX300.jpg",
-    runtime: 116,
-    imdbRating: 8.5,
-    userRating: 9,
-  },
-];
-
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 
@@ -59,18 +12,23 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState(null); //"tt1375666"
 
   useEffect(
     function () {
+      // Implementing Request Cleanup
+      const controller = new AbortController();
+      const signal = controller.signal;
+
       // Fetch movies data when component mounts
       async function fetchMovies() {
         try {
           setIsLoading(true);
-          setError(false);
+          setError("");
           const res = await fetch(
-            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
+            { signal: signal }
           );
 
           if (!res.ok) {
@@ -83,9 +41,13 @@ export default function App() {
 
           setMovies(data.Search);
           console.log(data.Search);
+          setError("");
         } catch (error) {
-          console.error(error.message);
-          setError(error.message);
+          //console.error(error.message);
+
+          if (error.name !== "AbortError") {
+            setError(error.message);
+          }
         } finally {
           setIsLoading(false);
         }
@@ -94,12 +56,16 @@ export default function App() {
       if (query.length < 3) {
         setShowInitialMessage(true);
         setMovies([]);
-        setError(false);
+        setError("");
         return;
       }
       setShowInitialMessage(false);
 
       fetchMovies();
+
+      return function () {
+        controller.abort();
+      };
     },
     [query]
   );
@@ -319,6 +285,19 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
       getMovieDetailes(); // Call the function to fetch movie details
     },
     [selectedId]
+  );
+
+  useEffect(
+    function () {
+      document.title = `Movie | ${movie.Title}`;
+      // console.log("Title Changed"); => Executed After
+
+      return function () {
+        document.title = `usePopcorn`;
+        // console.log(`cleanup effect for Movie ${movie.Title} `); EXECUTED BEFORE effect
+      };
+    },
+    [Title]
   );
 
   return (
