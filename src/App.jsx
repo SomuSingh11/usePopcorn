@@ -40,12 +40,11 @@ export default function App() {
           if (data.Response === "False") throw new Error("Movie Not Found");
 
           setMovies(data.Search);
-          console.log(data.Search);
+          //console.log(data.Search);
           setError("");
         } catch (error) {
-          //console.error(error.message);
-
           if (error.name !== "AbortError") {
+            console.error(error.message);
             setError(error.message);
           }
         } finally {
@@ -64,6 +63,7 @@ export default function App() {
       fetchMovies();
 
       return function () {
+        setSelectedId(null); //MovieDeatils is closed whenever we change query on search bar
         controller.abort();
       };
     },
@@ -264,7 +264,7 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
       Runtime: Number(Runtime.split(" ")[0]),
       userRating,
     };
-    console.log(newWatchedMovie);
+    // console.log(newWatchedMovie);
     onAddWatched(newWatchedMovie);
     onCloseMovie();
   }
@@ -280,7 +280,7 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
         const data = await res.json();
         setMovie(data);
         setIsLoading(false);
-        console.log(data);
+        //console.log(data);
       }
       getMovieDetailes(); // Call the function to fetch movie details
     },
@@ -297,7 +297,26 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
         // console.log(`cleanup effect for Movie ${movie.Title} `); EXECUTED BEFORE effect
       };
     },
-    [Title]
+    [movie.Title]
+  );
+
+  useEffect(
+    function () {
+      const handleKeyPress = (event) => {
+        if (event.code === "Escape") {
+          onCloseMovie();
+          //console.log("Add Event Listerner");
+        }
+      };
+
+      document.addEventListener("keydown", handleKeyPress);
+
+      return () => {
+        document.removeEventListener("keydown", handleKeyPress);
+        //console.log("Delete Event Listener");
+      };
+    },
+    [onCloseMovie]
   );
 
   return (
@@ -397,7 +416,7 @@ function WatchedMovieList({ watched, onDeleteWatched }) {
       {watched.map((movie) => (
         <WatchedMovie
           movie={movie}
-          key={movie.imdbID}
+          key={movie.imdbId}
           onDeleteWatched={onDeleteWatched}
         />
       ))}
