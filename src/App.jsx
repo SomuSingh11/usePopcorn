@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import StarRating from "./StarRating";
+import { useMovies } from "./useMovies";
 
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
@@ -7,72 +8,18 @@ const average = (arr) =>
 const KEY = `${import.meta.env.VITE_OMDb_API_KEY}`;
 
 export default function App() {
-  const [movies, setMovies] = useState([]);
-  const [showInitialMessage, setShowInitialMessage] = useState(false);
   const [query, setQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState(null); //"tt1375666"
+
+  const { movies, isLoading, error, showInitialMessage } = useMovies(
+    query,
+    handleCloseMovie
+  );
 
   const [watched, setWatched] = useState(function () {
     const storedValue = localStorage.getItem("watched");
     return storedValue ? JSON.parse(storedValue) : [];
   });
-
-  useEffect(
-    function () {
-      // Implementing Request Cleanup
-      const controller = new AbortController();
-      const signal = controller.signal;
-
-      // Fetch movies data when component mounts
-      async function fetchMovies() {
-        try {
-          setIsLoading(true);
-          setError("");
-          const res = await fetch(
-            `https://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
-            { signal: signal }
-          );
-
-          if (!res.ok) {
-            throw new Error("Something went Wrong while fetching Movies");
-          }
-
-          const data = await res.json();
-
-          if (data.Response === "False") throw new Error("Movie Not Found");
-
-          setMovies(data.Search);
-          //console.log(data.Search);
-          setError("");
-        } catch (error) {
-          if (error.name !== "AbortError") {
-            console.error(error.message);
-            setError(error.message);
-          }
-        } finally {
-          setIsLoading(false);
-        }
-      }
-
-      if (query.length < 3) {
-        setShowInitialMessage(true);
-        setMovies([]);
-        setError("");
-        return;
-      }
-      setShowInitialMessage(false);
-
-      fetchMovies();
-
-      return function () {
-        setSelectedId(null); //MovieDeatils is closed whenever we change query on search bar
-        controller.abort();
-      };
-    },
-    [query]
-  );
 
   function handleSelectedId(id) {
     /* if (selectedId === id) {
