@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import StarRating from "./StarRating";
 import { useMovies } from "./useMovies";
+import { useLocalStorage } from "./useLocalStorage";
+import { useKey } from "./useKey";
 
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
@@ -9,25 +11,16 @@ const KEY = `${import.meta.env.VITE_OMDb_API_KEY}`;
 
 export default function App() {
   const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState(null); //"tt1375666"
+  const [selectedId, setSelectedId] = useState(null);
 
+  // CUSTOM HOOKS
   const { movies, isLoading, error, showInitialMessage } = useMovies(
     query,
     handleCloseMovie
   );
-
-  const [watched, setWatched] = useState(function () {
-    const storedValue = localStorage.getItem("watched");
-    return storedValue ? JSON.parse(storedValue) : [];
-  });
+  const [watched, setWatched] = useLocalStorage([], "watched");
 
   function handleSelectedId(id) {
-    /* if (selectedId === id) {
-       setSelectedId(null);
-     } else {
-       setSelectedId(id);
-     } 
-  */
     setSelectedId((selectedId) => (selectedId === id ? null : id));
   }
 
@@ -42,13 +35,6 @@ export default function App() {
   function handleDeleteWatched(id) {
     setWatched((watched) => watched.filter((movie) => movie.imdbId !== id));
   }
-
-  useEffect(
-    function () {
-      localStorage.setItem("watched", JSON.stringify(watched));
-    },
-    [watched]
-  );
 
   return (
     <>
@@ -125,21 +111,12 @@ function Logo() {
 function Search({ query, setQuery }) {
   const inputEl = useRef(null);
 
-  useEffect(
-    function () {
-      function callback(e) {
-        if (document.activeElement === inputEl.current) return;
-        if (e.code === "Enter") {
-          inputEl.current.focus();
-          setQuery("");
-        }
-      }
-
-      document.addEventListener("keydown", callback);
-      return () => document.removeEventListener("keydown", callback);
-    },
-    [setQuery]
-  );
+  // custom hook to focus on search on keypress
+  useKey("Enter", function () {
+    if (document.activeElement === inputEl.current) return;
+    inputEl.current.focus();
+    setQuery("");
+  });
 
   return (
     <input
@@ -246,6 +223,8 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
     onCloseMovie();
   }
 
+  useKey("Escape", onCloseMovie);
+
   useEffect(
     function () {
       // Function to fetch movie details based on selectedId
@@ -275,25 +254,6 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
       };
     },
     [movie.Title]
-  );
-
-  useEffect(
-    function () {
-      const handleKeyPress = (event) => {
-        if (event.code === "Escape") {
-          onCloseMovie();
-          //console.log("Add Event Listerner");
-        }
-      };
-
-      document.addEventListener("keydown", handleKeyPress);
-
-      return () => {
-        document.removeEventListener("keydown", handleKeyPress);
-        //console.log("Delete Event Listener");
-      };
-    },
-    [onCloseMovie]
   );
 
   return (
